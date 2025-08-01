@@ -9,12 +9,19 @@ module.exports = (req, res) => {
   
   if (req.method === 'GET') {
     try {
+      // Use absolute path from project root
       const dataPath = path.join(process.cwd(), 'data.json');
+      console.log('Looking for data.json at:', dataPath);
+      
       const data = JSON.parse(fs.readFileSync(dataPath, 'utf-8'));
       res.status(200).json(data.leaderboard);
     } catch (error) {
       console.error('Error reading data:', error);
-      res.status(500).json({ error: 'Failed to read data', details: error.message });
+      res.status(500).json({ 
+        error: 'Failed to read data', 
+        details: error.message,
+        path: path.join(process.cwd(), 'data.json')
+      });
     }
   } else {
     res.status(405).json({ error: 'Method not allowed' });
