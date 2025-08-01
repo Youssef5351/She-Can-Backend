@@ -1,7 +1,7 @@
 const fs = require('fs');
 const path = require('path');
 
-export default function handler(req, res) {
+module.exports = (req, res) => {
   // Enable CORS
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE');
@@ -13,9 +13,10 @@ export default function handler(req, res) {
       const data = JSON.parse(fs.readFileSync(dataPath, 'utf-8'));
       res.status(200).json(data.user);
     } catch (error) {
-      res.status(500).json({ error: 'Failed to read data' });
+      console.error('Error reading data:', error);
+      res.status(500).json({ error: 'Failed to read data', details: error.message });
     }
   } else {
     res.status(405).json({ error: 'Method not allowed' });
   }
-}
+};
