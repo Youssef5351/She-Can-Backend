@@ -1,43 +1,24 @@
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
+const fs = require('fs');
+const path = require('path');
 
-// Get __dirname equivalent in ES modules
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-export default function handler(req, res) {
+module.exports = (req, res) => {
   try {
-    // Try multiple possible paths for data.json
-    const possiblePaths = [
-      path.join(__dirname, 'data.json'),
-      path.join(process.cwd(), 'api', 'data.json'),
-      path.join(process.cwd(), 'data.json')
-    ];
+    // More robust path resolution for serverless environment
+    const filePath = path.join(process.cwd(), 'api', 'data.json');
     
-    let filePath = null;
-    let jsonData = null;
-    
-    // Find the correct path
-    for (const testPath of possiblePaths) {
-      if (fs.existsSync(testPath)) {
-        filePath = testPath;
-        break;
-      }
-    }
-    
-    if (!filePath) {
-      console.error('data.json file not found in any of these paths:', possiblePaths);
+    // Check if file exists before reading
+    if (!fs.existsSync(filePath)) {
+      console.error('data.json file not found at:', filePath);
       return res.status(500).json({ 
         error: 'Data file not found',
-        searchedPaths: possiblePaths
+        path: filePath 
       });
     }
     
-    jsonData = fs.readFileSync(filePath, 'utf-8');
+    const jsonData = fs.readFileSync(filePath, 'utf-8');
     const data = JSON.parse(jsonData);
     
-    // Validate data structure
+    // Validate data structure - CHECK FOR LEADERBOARD NOT USER!
     if (!data || !data.leaderboard) {
       console.error('Invalid data structure in data.json - leaderboard not found');
       return res.status(500).json({ 
@@ -47,15 +28,14 @@ export default function handler(req, res) {
     
     // Set proper headers
     res.setHeader('Content-Type', 'application/json');
-    res.setHeader('Cache-Control', 'no-cache');
-    res.status(200).json(data.leaderboard);
+    res.status(200).json(data.leaderboard); // RETURN LEADERBOARD NOT USER!
     
   } catch (error) {
     console.error('Error in leaderboard API:', error);
     res.status(500).json({ 
       error: 'Internal server error',
       message: error.message,
-      type: error.constructor.name
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
     });
   }
-}
+};
