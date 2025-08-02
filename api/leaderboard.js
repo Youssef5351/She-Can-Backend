@@ -2,6 +2,17 @@ const fs = require('fs');
 const path = require('path');
 
 module.exports = (req, res) => {
+  // Set CORS headers FIRST!
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  
+  // Handle preflight OPTIONS request
+  if (req.method === 'OPTIONS') {
+    res.status(200).end();
+    return;
+  }
+  
   try {
     // More robust path resolution for serverless environment
     const filePath = path.join(process.cwd(), 'api', 'data.json');
@@ -18,7 +29,7 @@ module.exports = (req, res) => {
     const jsonData = fs.readFileSync(filePath, 'utf-8');
     const data = JSON.parse(jsonData);
     
-    // Validate data structure - CHECK FOR LEADERBOARD NOT USER!
+    // Validate data structure - CHECK FOR LEADERBOARD!
     if (!data || !data.leaderboard) {
       console.error('Invalid data structure in data.json - leaderboard not found');
       return res.status(500).json({ 
@@ -28,7 +39,7 @@ module.exports = (req, res) => {
     
     // Set proper headers
     res.setHeader('Content-Type', 'application/json');
-    res.status(200).json(data.leaderboard); // RETURN LEADERBOARD NOT USER!
+    res.status(200).json(data.leaderboard);
     
   } catch (error) {
     console.error('Error in leaderboard API:', error);
